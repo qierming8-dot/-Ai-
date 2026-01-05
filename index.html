@@ -3,570 +3,353 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>小小克里斯的Ai创作分享 — 优化交互版</title>
+  <title>小小克里斯的Ai创作分享 — 动态天空版</title>
 
-  <!-- 可爱中文体：ZCOOL XiaoWei -->
-  <link href="https://fonts.googleapis.com/css2?family=ZCOOL+XiaoWei&display=swap" rel="stylesheet">
+  <!-- 清晰现代中文体 -->
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@300;400;500;700&display=swap" rel="stylesheet">
 
   <style>
     :root{
-      --header-bg: rgba(135,206,250,0.18); /* 透明天空蓝 */
-      --accent: #76d7ff;
-      --dark1: #051428;
-      --dark2: #0b273f;
-      --card-bg: linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));
-      --glass: rgba(255,255,255,0.04);
-      --shadow: 0 6px 20px rgba(2,6,23,0.6);
-      --trail-z: 9999;
-      --squirtle-z: 10001;
+      --sky-top: #bfe9ff;   /* 亮天空蓝（背景顶） */
+      --sky-bottom: #8fd1ff;/* 亮天空蓝（背景底） */
+      --header-left: rgba(78,173,255,0.28);   /* 更浓的透明天空蓝（左） */
+      --header-right: rgba(54,140,235,0.36);  /* 更浓的透明天空蓝（右） */
+      --card-border: rgba(120,190,255,0.22);
+      --flat-card-bg: rgba(255,255,255,0.02);
+      --text-dark: #08314a;
+      --muted: rgba(8,49,74,0.66);
+      --btn-bg: linear-gradient(90deg,#57c1ff,#1e90ff);
+      --max-width: 1180px;
+      --header-elev: 0 10px 30px rgba(10,48,80,0.10);
     }
 
     html,body{
       height:100%;
       margin:0;
-      font-family: "ZCOOL XiaoWei", "PingFang SC", "Microsoft Yahei", sans-serif;
-      background: linear-gradient(180deg, #001726 0%, #00101a 45%, #021428 100%);
-      color: #e6f0ff;
+      background: linear-gradient(180deg, var(--sky-top) 0%, var(--sky-bottom) 100%);
+      font-family: "Noto Sans SC", "PingFang SC", "Microsoft Yahei", sans-serif;
+      color:var(--text-dark);
       -webkit-font-smoothing:antialiased;
       -moz-osx-font-smoothing:grayscale;
-      overflow-y: auto;
-      cursor: default;
+      font-size:16px;
+      line-height:1.45;
+      overflow-x:hidden;
     }
 
+    /* ===== floating realistic clouds container (full screen) ===== */
+    .sky {
+      position:fixed;
+      inset:0;
+      z-index:0;
+      pointer-events:none;
+      overflow:hidden;
+      will-change:transform;
+    }
+
+    /* cloud base style: use SVG shapes, subtle blur and opacity */
+    .cloud-svg{
+      position:absolute;
+      filter: blur(6px) saturate(105%);
+      opacity:0.95;
+      transform-origin:center;
+      will-change:transform;
+    }
+
+    /* multiple cloud layers with different sizes / speeds for parallax realism */
+    .cloud-1{ width:1000px; height:auto; left:-18%; top:6%; animation: cloudMove1 86s linear infinite; opacity:0.98; transform:translate3d(0,0,0) scale(1.05); }
+    .cloud-2{ width:820px; height:auto; left:-20%; top:20%; animation: cloudMove2 58s linear infinite; opacity:0.94; transform:translate3d(0,0,0) scale(1.02); }
+    .cloud-3{ width:620px; height:auto; left:-28%; top:42%; animation: cloudMove3 96s linear infinite; opacity:0.9; transform:translate3d(0,0,0) scale(0.98); }
+    .cloud-4{ width:480px; height:auto; left:-15%; top:68%; animation: cloudMove4 52s linear infinite; opacity:0.86; transform:translate3d(0,0,0) scale(0.92); }
+
+    @keyframes cloudMove1 { 0%{ transform: translateX(-10vw);} 50%{ transform: translateX(110vw) translateY(4px);} 100%{ transform: translateX(-10vw);} }
+    @keyframes cloudMove2 { 0%{ transform: translateX(-8vw);} 50%{ transform: translateX(106vw) translateY(-6px);} 100%{ transform: translateX(-8vw);} }
+    @keyframes cloudMove3 { 0%{ transform: translateX(-12vw);} 50%{ transform: translateX(112vw) translateY(8px);} 100%{ transform: translateX(-12vw);} }
+    @keyframes cloudMove4 { 0%{ transform: translateX(-6vw);} 50%{ transform: translateX(104vw) translateY(2px);} 100%{ transform: translateX(-6vw);} }
+
+    /* ===== header (prominent, slightly darker/brighter than main background) ===== */
     header{
       position: sticky;
       top:0;
-      z-index: 60;
-      backdrop-filter: blur(6px);
-      background: linear-gradient(90deg, var(--header-bg), rgba(255,255,255,0.02));
-      border-bottom: 1px solid rgba(255,255,255,0.03);
-      padding: 18px 28px;
+      z-index: 40;
       display:flex;
       align-items:center;
       justify-content:space-between;
-      box-shadow: 0 6px 18px rgba(0,0,0,0.25);
+      padding:16px 28px;
+      background: linear-gradient(90deg, var(--header-left), var(--header-right));
+      box-shadow: var(--header-elev);
+      backdrop-filter: blur(6px);
+      border-bottom: 1px solid rgba(255,255,255,0.06);
     }
-    header .title{
-      display:flex;
-      align-items:center;
-      gap:14px;
-      font-size:20px;
-      font-weight:700;
-      color:#fff;
-      text-shadow: 0 2px 8px rgba(0,0,0,0.4);
+    .header-left{ display:flex; align-items:center; gap:14px; z-index:41; }
+    .site-title{ font-size:30px; font-weight:400; margin:0; color:var(--text-dark); }
+    .site-sub{ font-size:13px; color:var(--muted); margin-top:4px; }
+
+    /* sun element: gentle pulsating glow (not harsh) */
+    .sun-wrap{ width:82px; height:82px; position:relative; display:flex; align-items:center; justify-content:center; }
+    .sun{
+      width:44px; height:44px; border-radius:50%;
+      background: radial-gradient(circle at 35% 30%, #fff7d6 0%, #ffeaa3 22%, #ffd06a 46%, #ffc04a 70%);
+      box-shadow: 0 6px 24px rgba(255,195,80,0.16), 0 2px 8px rgba(255,225,160,0.12);
+      filter: blur(0.2px);
+      animation: sunGlow 2200ms ease-in-out infinite;
     }
-    header .subtitle{
-      font-size:12px;
-      color: rgba(255,255,255,0.7);
+    .sun-rays{
+      position:absolute; width:120px; height:120px; opacity:0.22;
+      background: radial-gradient(circle at 50% 50%, rgba(255,245,200,0.6) 6%, rgba(255,240,180,0.18) 20%, rgba(255,240,180,0.05) 50%, rgba(255,240,180,0));
+      border-radius:50%;
+      animation: raysPulse 3200ms ease-in-out infinite;
+      pointer-events:none;
+    }
+    @keyframes sunGlow {
+      0%{ transform: scale(1); filter: blur(0.2px); }
+      50%{ transform: scale(1.06); filter: blur(0.6px); }
+      100%{ transform: scale(1); filter: blur(0.2px); }
+    }
+    @keyframes raysPulse {
+      0%{ opacity:0.18; transform: scale(1); }
+      50%{ opacity:0.26; transform: scale(1.06); }
+      100%{ opacity:0.18; transform: scale(1); }
     }
 
+    .header-right{ display:flex; align-items:center; gap:12px; z-index:41; }
+    .qr-wrap{ display:flex; align-items:center; gap:8px; padding:6px 8px; border-radius:8px; cursor:pointer; background: rgba(255,255,255,0.02); text-decoration:none; color:var(--muted); border:1px solid rgba(255,255,255,0.03); }
+    .qr-wrap img{ width:62px; height:62px; border-radius:6px; display:block; }
+
+    /* main content */
     main{
-      padding: 28px;
-      max-width:1200px;
+      max-width: var(--max-width);
       margin: 28px auto;
+      padding: 0 20px 80px 20px;
+      position:relative;
+      z-index:10;
     }
 
-    .row{
+    /* product grid (flat, thin blue border) */
+    .grid{
       display:grid;
       grid-template-columns: repeat(3, 1fr);
-      gap:18px;
-      margin-bottom: 20px;
+      gap:16px;
+      margin-top:8px;
     }
+    @media (max-width:980px){ .grid{ grid-template-columns: repeat(2,1fr); } }
+    @media (max-width:620px){ .grid{ grid-template-columns: 1fr; } }
 
     .card{
-      background: var(--card-bg);
-      border-radius: 12px;
-      overflow: hidden;
-      padding: 10px;
-      box-shadow: var(--shadow);
-      border: 1px solid rgba(255,255,255,0.03);
-      transition: transform .18s ease, box-shadow .18s ease;
-      position: relative;
-      user-select: none;
-    }
-    .card:hover{
-      transform: translateY(-6px);
-      box-shadow: 0 12px 30px rgba(2,6,23,0.7);
-    }
-    .thumb{
-      width:100%;
-      height:160px;
-      background:#122;
+      background: var(--flat-card-bg);
       border-radius:10px;
-      overflow:hidden;
-      display:flex;
-      justify-content:center;
-      align-items:center;
-    }
-    .thumb img{
-      width:100%;
-      height:100%;
-      object-fit:cover;
-      display:block;
-      transition: transform .6s cubic-bezier(.2,.9,.3,1);
-    }
-    .card:hover .thumb img{ transform: scale(1.04); }
-    .meta{
-      padding:10px 6px 2px 6px;
-      font-size:13px;
-    }
-    .meta .name{
-      font-weight:700;
-      margin-bottom:6px;
-    }
-    .meta .prompt-preview{
-      font-size:12px;
-      color: #d8ebff;
-      line-height:1.4;
-      max-height:42px;
-      overflow:hidden;
-    }
-    .actions{
-      display:flex;
-      justify-content:space-between;
-      align-items:center;
-      padding-top:8px;
-    }
-    .btn{
-      background: linear-gradient(90deg,#4fc3ff,#1e90ff);
-      border:none;
-      color:#012;
-      font-weight:700;
-      padding:8px 12px;
-      border-radius:8px;
-      cursor:pointer;
-      box-shadow: 0 6px 18px rgba(30,144,255,0.12);
-    }
-
-    /* Modal */
-    .overlay{
-      position: fixed;
-      inset:0;
-      display:none;
-      align-items:center;
-      justify-content:center;
-      z-index: 120;
-      background: linear-gradient(180deg, rgba(0,0,0,0.5), rgba(0,0,0,0.6));
-    }
-    .overlay.open{ display:flex; }
-
-    .modal{
-      width: 90%;
-      max-width:1100px;
-      height: 78vh;
-      background: linear-gradient(180deg, rgba(10,20,30,0.98), rgba(6,14,22,0.99));
-      border-radius:12px;
-      display:flex;
-      overflow:hidden;
-      box-shadow: 0 20px 60px rgba(0,0,0,0.7);
-      position:relative;
-    }
-
-    .modal .image-area{
-      flex: 1 1 auto;
-      min-width: 260px;
-      display:flex;
-      align-items:center;
-      justify-content:center;
-      background: linear-gradient(135deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));
-      position:relative;
-    }
-    .modal .image-area img{
-      max-width: 98%;
-      max-height: 94%;
-      border-radius:8px;
-      object-fit:contain;
-      box-shadow: 0 12px 40px rgba(0,0,0,0.6);
-      transition: filter .36s ease, transform .36s ease;
-      filter: drop-shadow(0 8px 30px rgba(0,0,0,0.6));
-    }
-
-    .splitter{
-      width: 8px;
-      cursor: col-resize;
-      background: linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.03));
-      position:relative;
-    }
-    .prompt-area{
-      width: 360px;
-      max-width: 65%;
-      min-width: 220px;
-      background: linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));
-      padding: 14px;
+      padding:10px;
+      border: 1px solid var(--card-border);
       display:flex;
       flex-direction:column;
       gap:10px;
+      user-select:none;
+      transition: transform .16s ease, box-shadow .16s ease;
     }
-    .pad-title{
-      font-weight:800;
-      font-size:16px;
-      color:#dff6ff;
+    .card:hover{ transform: translateY(-6px); box-shadow: 0 10px 30px rgba(8,40,80,0.06); }
+
+    .thumb{ width:100%; aspect-ratio:1/1; overflow:hidden; border-radius:8px; display:flex; align-items:center; justify-content:center; background:linear-gradient(180deg, rgba(255,255,255,0.01), rgba(255,255,255,0.005)); }
+    .thumb img{ width:100%; height:100%; object-fit:cover; display:block; }
+
+    .prompt-preview{ font-size:15px; color:var(--text-dark); margin:0; min-height:44px; overflow:hidden; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; }
+
+    .card-foot{ display:flex; justify-content:space-between; align-items:center; gap:10px; }
+    .btn{ background: var(--btn-bg); color:#012031; border:none; padding:8px 12px; border-radius:8px; cursor:pointer; font-weight:600; font-size:14px; }
+
+    /* modal */
+    .overlay{ position:fixed; inset:0; z-index:300; display:none; align-items:center; justify-content:center; background: linear-gradient(180deg, rgba(10,28,46,0.12), rgba(10,18,32,0.22)); padding:24px; }
+    .overlay.open{ display:flex; }
+    .modal{ width:92%; max-width:1100px; height:82vh; background: #ffffff; border-radius:12px; display:flex; overflow:hidden; position:relative; color:#06354a; box-shadow: 0 18px 50px rgba(6,24,40,0.12); }
+    .image-area{ flex:1 1 60%; display:flex; align-items:center; justify-content:center; padding:18px; background:linear-gradient(180deg,#f8fdff,#f0fbff); }
+    .image-area img{ max-width:100%; max-height:100%; border-radius:8px; object-fit:contain; display:block; box-shadow: 0 12px 30px rgba(8,24,40,0.06); }
+    .info-area{ width:360px; min-width:220px; padding:18px; display:flex; flex-direction:column; gap:12px; justify-content:space-between; background:linear-gradient(180deg,#f6fbff,#f0f9ff); }
+    .info-title{ font-size:18px; font-weight:500; color:#013a5e; margin:0; }
+    .prompt-box{ background: rgba(1,54,90,0.02); border-radius:8px; padding:10px; color:#033955; font-size:14px; overflow:auto; min-height:160px; white-space:pre-wrap; line-height:1.55; }
+    .info-actions{ display:flex; gap:10px; justify-content:flex-start; align-items:center; padding-top:6px; }
+    .close-btn{ position:absolute; right:12px; top:10px; background:transparent; border:1px solid rgba(0,0,0,0.06); color:var(--muted); padding:6px 9px; border-radius:8px; cursor:pointer; }
+
+    /* balloon style + animation */
+    .balloon{
+      position:fixed;
+      width:48px;
+      height:64px;
+      pointer-events:none;
+      z-index:250;
+      transform-origin:center bottom;
+      will-change: transform, top, opacity;
+      animation-timing-function: linear;
       display:flex;
-      justify-content:space-between;
-      align-items:center;
-      gap:10px;
+      align-items:flex-start;
+      justify-content:center;
     }
-    .prompt-box{
-      background: rgba(0,0,0,0.22);
-      border-radius:10px;
-      padding:8px;
-      flex:1 1 auto;
-      overflow:auto;
-      color:#e2f6ff;
-      font-size:14px;
-      line-height:1.6;
-    }
-    .prompt-text{
-      background: linear-gradient(180deg, rgba(255,255,255,0.01), rgba(255,255,255,0.00));
-      border-radius:8px;
-      padding:10px;
-      min-height:160px;
-      max-height: calc(100vh - 260px);
-      overflow:auto;
-      resize: none;
-      border: 1px dashed rgba(255,255,255,0.03);
-      outline:none;
+    .balloon svg{ width:48px; height:64px; display:block; }
+    @keyframes floatUp {
+      0%{ transform: translateY(0) scale(1); opacity:1; }
+      70%{ transform: translateY(-84vh) scale(1.04); opacity:1; }
+      100%{ transform: translateY(-94vh) scale(1.08); opacity:0; }
     }
 
-    .close-btn{
-      position:absolute;
-      right:12px;
-      top:10px;
-      background:transparent;
-      border: 1px solid rgba(255,255,255,0.06);
-      color:#fff;
-      padding:6px 9px;
-      border-radius:8px;
-      cursor:pointer;
-    }
-
-    .hint{
-      color: rgba(255,255,255,0.5);
-      font-size:12px;
-    }
-
-    /* improved trail (SVG crispness + subtle glow) */
-    .trail-svg{
-      position: fixed;
-      width: 36px;
-      height: 36px;
-      pointer-events: none;
-      z-index: var(--trail-z);
-      transform-origin: center center;
-      will-change: transform, opacity, filter;
-      filter: drop-shadow(0 6px 10px rgba(0,0,0,0.45));
-    }
-    .trail-svg.hidden{ display:none; }
-
-    .trail-fade {
-      animation: trailPop 700ms cubic-bezier(.2,.9,.3,1) forwards;
-    }
-    @keyframes trailPop{
-      0%{ opacity:1; transform: translate(-50%,-50%) scale(1); }
-      100%{ opacity:0; transform: translate(-50%,-50%) scale(1.8) translateY(-6px); }
-    }
-
-    /* squirtle (click) improved visuals */
-    .squirtle-svg{
-      position: fixed;
-      width: 84px;
-      height: 84px;
-      pointer-events: none;
-      z-index: var(--squirtle-z);
-      transform-origin: center center;
-      will-change: transform, left, top, opacity;
-      transition: left 420ms cubic-bezier(.2,.9,.3,1), top 420ms cubic-bezier(.2,.9,.3,1), transform 420ms cubic-bezier(.2,.9,.3,1), opacity 420ms linear;
-      filter: drop-shadow(0 16px 30px rgba(0,0,0,0.55));
-    }
-    .squirtle-svg .squirtle-bounce {
-      animation: bounceScale 900ms cubic-bezier(.2,.9,.3,1);
-    }
-    @keyframes bounceScale{
-      0%{ transform: scale(.6) translateY(6px); }
-      40%{ transform: scale(1.06) translateY(-8px); }
-      70%{ transform: scale(.96) translateY(0); }
-      100%{ transform: scale(1) translateY(0); }
-    }
-
-    @media (max-width:920px){
-      .row{ grid-template-columns: repeat(2,1fr); }
-      .prompt-area{ width: 320px; }
-    }
+    /* small responsive tweaks */
     @media (max-width:640px){
-      .row{ grid-template-columns: repeat(1,1fr); }
-      .modal{ height:86vh; flex-direction:column; }
-      .splitter{ width:100%; height:8px; cursor:row-resize; }
-      .prompt-area{ width:100%; min-width:100%; max-width:100%; }
-      .image-area{ order:1; min-height:220px; }
+      .site-title{ font-size:22px; }
+      .info-area{ display:none; }
+      .modal{ flex-direction:column; height:85vh; }
+      .image-area{ order:1; min-height:320px; }
     }
   </style>
 </head>
 <body>
+  <!-- Dynamic sky and clouds -->
+  <div class="sky" aria-hidden="true">
+    <!-- Cloud 1: big soft cloud group -->
+    <svg class="cloud-svg cloud-1" viewBox="0 0 1000 300" preserveAspectRatio="xMidYMid meet" xmlns="http://www.w3.org/2000/svg" role="img" aria-hidden="true">
+      <defs>
+        <linearGradient id="cg1" x1="0" x2="1"><stop offset="0" stop-color="#ffffff"/><stop offset="1" stop-color="#f3fbff"/></linearGradient>
+        <filter id="cblur1" x="-50%" y="-50%" width="200%" height="200%"><feGaussianBlur stdDeviation="20" /></filter>
+      </defs>
+      <g filter="url(#cblur1)" fill="url(#cg1)" opacity="0.98">
+        <ellipse cx="220" cy="150" rx="240" ry="60"/>
+        <ellipse cx="480" cy="120" rx="200" ry="50"/>
+        <ellipse cx="80" cy="130" rx="160" ry="48"/>
+        <ellipse cx="700" cy="150" rx="180" ry="52"/>
+      </g>
+    </svg>
+
+    <!-- Cloud 2: mid layer -->
+    <svg class="cloud-svg cloud-2" viewBox="0 0 820 240" preserveAspectRatio="xMidYMid meet" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+      <defs><filter id="cblur2"><feGaussianBlur stdDeviation="14"/></filter></defs>
+      <g filter="url(#cblur2)" fill="#ffffff" opacity="0.94">
+        <ellipse cx="180" cy="110" rx="160" ry="46"/>
+        <ellipse cx="360" cy="90" rx="120" ry="36"/>
+        <ellipse cx="60" cy="96" rx="90" ry="30"/>
+      </g>
+    </svg>
+
+    <!-- Cloud 3: farther layer -->
+    <svg class="cloud-svg cloud-3" viewBox="0 0 620 180" preserveAspectRatio="xMidYMid meet" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+      <defs><filter id="cblur3"><feGaussianBlur stdDeviation="8"/></filter></defs>
+      <g filter="url(#cblur3)" fill="#ffffff" opacity="0.88">
+        <ellipse cx="140" cy="80" rx="120" ry="36"/>
+        <ellipse cx="300" cy="64" rx="100" ry="30"/>
+      </g>
+    </svg>
+
+    <!-- Cloud 4: near bottom -->
+    <svg class="cloud-svg cloud-4" viewBox="0 0 480 140" preserveAspectRatio="xMidYMid meet" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+      <defs><filter id="cblur4"><feGaussianBlur stdDeviation="6"/></filter></defs>
+      <g filter="url(#cblur4)" fill="#ffffff" opacity="0.84">
+        <ellipse cx="120" cy="60" rx="96" ry="28"/>
+        <ellipse cx="240" cy="52" rx="76" ry="24"/>
+      </g>
+    </svg>
+  </div>
+
   <header>
-    <div class="title">
-      <div style="width:44px;height:44px;border-radius:10px;background:linear-gradient(135deg,#a0e7ff,#6ec7ff);display:flex;align-items:center;justify-content:center;color:#022;font-weight:900;font-size:16px;">Ai</div>
+    <div class="header-left">
+      <!-- Sun (gentle, pulsing, non-strobing) -->
+      <div class="sun-wrap" aria-hidden="true">
+        <div class="sun-rays" aria-hidden="true"></div>
+        <div class="sun" aria-hidden="true"></div>
+      </div>
+
       <div>
-        小小克里斯的Ai创作分享
-        <div class="subtitle">AIGC 文生图 · 图生视频 · 提示词实战</div>
+        <h1 class="site-title">小小克里斯的Ai创作分享</h1>
+        <div class="site-sub">AIGC 文生图 · 图生视频 · 提示词实战</div>
       </div>
     </div>
-    <div class="hint">向下滚动查看作品 · 点击缩略图查看并拉动提示词面板</div>
+
+    <div class="header-right">
+      <a class="qr-wrap" href="https://t.me/kkris1012" target="_blank" rel="noreferrer noopener" title="加入 Telegram 频道">
+        <img src="https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=https://t.me/kkris1012" alt="Telegram 频道 QR">
+        <div style="font-size:13px;color:var(--muted);">加入 Telegram</div>
+      </a>
+    </div>
   </header>
 
   <main>
-    <!-- 作品网格（示例内容，替换请在脚本中修改 items） -->
-    <section class="row" id="row-1">
+    <section class="grid" id="grid">
       <article class="card" data-index="0">
-        <div class="thumb">
-          <img src="https://images.unsplash.com/photo-1542751371-adc38448a05e?q=80&w=1200&auto=format&fit=crop&ixlib=rb-4.0.3&s=2397bd5a3955d5f6f21b68f6f0f7bd3f" alt="作品1"/>
-        </div>
-        <div class="meta">
-          <div class="name">梦境都市（文生图）</div>
-          <div class="prompt-preview">提示词：奇幻都市夜景，赛博朋克，霓虹光，超高细节</div>
-        </div>
-        <div class="actions">
-          <div class="hint">尺寸：1024×1024</div>
-          <button class="btn open-btn" data-index="0">查看 / 提示词</button>
-        </div>
+        <div class="thumb"><img src="https://images.unsplash.com/photo-1542751371-adc38448a05e?q=80&w=1200&auto=format&fit=crop&ixlib=rb-4.0.3&s=2397bd5a3955d5f6f21b68f6f0f7bd3f" alt="作品1"></div>
+        <p class="prompt-preview">奇幻都市夜景，赛博朋克风格，浓烈霓虹灯，远景飞行器，电影镜头感。</p>
+        <div class="card-foot"><div class="meta"></div><button class="btn open-btn" data-index="0">查看 / 提示词</button></div>
       </article>
 
       <article class="card" data-index="1">
-        <div class="thumb">
-          <img src="https://images.unsplash.com/photo-1517694712202-14dd9538aa97?q=80&w=1200&auto=format&fit=crop&ixlib=rb-4.0.3&s=4f8da4fbeae4f0a0f12bb3b7c2a1d9f4" alt="作品2"/>
-        </div>
-        <div class="meta">
-          <div class="name">机械之心（图生视频示例缩略）</div>
-          <div class="prompt-preview">提示词：齿轮运动，蓝色光效，loop 10s，慢动作</div>
-        </div>
-        <div class="actions">
-          <div class="hint">视频帧示意</div>
-          <button class="btn open-btn" data-index="1">查看 / 提示词</button>
-        </div>
+        <div class="thumb"><img src="https://images.unsplash.com/photo-1517694712202-14dd9538aa97?q=80&w=1200&auto=format&fit=crop&ixlib=rb-4.0.3&s=4f8da4fbeae4f0a0f12bb3b7c2a1d9f4" alt="作品2"></div>
+        <p class="prompt-preview">旋转齿轮中枢，微距镜头，蓝色背光，循环动效，粒子漂移风格。</p>
+        <div class="card-foot"><div class="meta"></div><button class="btn open-btn" data-index="1">查看 / 提示词</button></div>
       </article>
 
       <article class="card" data-index="2">
-        <div class="thumb">
-          <img src="https://images.unsplash.com/photo-1500530855697-b586d89ba3ee?q=80&w=1200&auto=format&fit=crop&ixlib=rb-4.0.3&s=8f6f63b1cac9a8d2a2b8ff47b3a1f9b7" alt="作品3"/>
-        </div>
-        <div class="meta">
-          <div class="name">森林精灵（混合风）</div>
-          <div class="prompt-preview">提示词：童话风格，柔光，绿意，微距人像</div>
-        </div>
-        <div class="actions">
-          <div class="hint">风格：柔和</div>
-          <button class="btn open-btn" data-index="2">查看 / 提示词</button>
-        </div>
+        <div class="thumb"><img src="https://images.unsplash.com/photo-1500530855697-b586d89ba3ee?q=80&w=1200&auto=format&fit=crop&ixlib=rb-4.0.3&s=8f6f63b1cac9a8d2a2b8ff47b3a1f9b7" alt="作品3"></div>
+        <p class="prompt-preview">童话风格人像，柔和逆光，绿意，浅景深与细腻肤质处理。</p>
+        <div class="card-foot"><div class="meta"></div><button class="btn open-btn" data-index="2">查看 / 提示词</button></div>
       </article>
-    </section>
 
-    <section class="row" id="row-2">
       <article class="card" data-index="3">
-        <div class="thumb">
-          <img src="https://images.unsplash.com/photo-1500534314209-a25ddb2bd429?q=80&w=1200&auto=format&fit=crop&ixlib=rb-4.0.3&s=8f2d2f1d5b8c6eb0b7a3e1e3fdf7b5f8" alt="作品4"/>
-        </div>
-        <div class="meta">
-          <div class="name">未来航海（文生图）</div>
-          <div class="prompt-preview">提示词：未来航海，飞船，太空海浪，光粒子</div>
-        </div>
-        <div class="actions">
-          <div class="hint">尺寸：2048×1152</div>
-          <button class="btn open-btn" data-index="3">查看 / 提示词</button>
-        </div>
+        <div class="thumb"><img src="https://images.unsplash.com/photo-1500534314209-a25ddb2bd429?q=80&w=1200&auto=format&fit=crop&ixlib=rb-4.0.3&s=8f2d2f1d5b8c6eb0b7a3e1e3fdf7b5f8" alt="作品4"></div>
+        <p class="prompt-preview">太空海洋与飞船，蓝紫色光效，电影级构图与广角视觉。</p>
+        <div class="card-foot"><div class="meta"></div><button class="btn open-btn" data-index="3">查看 / 提示词</button></div>
       </article>
 
       <article class="card" data-index="4">
-        <div class="thumb">
-          <img src="https://images.unsplash.com/photo-1482192596544-9eb780fc7f66?q=80&w=1200&auto=format&fit=crop&ixlib=rb-4.0.3&s=cf5a4f2e2b5a4d6f6a7c2a1b3c4d9e5f" alt="作品5"/>
-        </div>
-        <div class="meta">
-          <div class="name">城市剪影（动态图示例）</div>
-          <div class="prompt-preview">提示词：高对比剪影，长曝光，动态光轨</div>
-        </div>
-        <div class="actions">
-          <div class="hint">演示：光轨</div>
-          <button class="btn open-btn" data-index="4">查看 / 提示词</button>
-        </div>
+        <div class="thumb"><img src="https://via.placeholder.com/800x800.png?text=清新晨光写真" alt="合规示例1"></div>
+        <p class="prompt-preview">清新晨光人像，居家风格，温柔表情，iPhone 风格，微颗粒胶片质感。</p>
+        <div class="card-foot"><div class="meta"></div><button class="btn open-btn" data-index="4">查看 / 提示词</button></div>
       </article>
 
       <article class="card" data-index="5">
-        <div class="thumb">
-          <img src="https://images.unsplash.com/photo-1502082553048-f009c37129b9?q=80&w=1200&auto=format&fit=crop&ixlib=rb-4.0.3&s=7d8e2a2a927d2f9d9e6a3f3b2c1d0e8a" alt="作品6"/>
-        </div>
-        <div class="meta">
-          <div class="name">温馨小屋（文生图）</div>
-          <div class="prompt-preview">提示词：温暖，黄光，木质纹理，细节渲染</div>
-        </div>
-        <div class="actions">
-          <div class="hint">风格：写实</div>
-          <button class="btn open-btn" data-index="5">查看 / 提示词</button>
-        </div>
+        <div class="thumb"><img src="https://via.placeholder.com/800x800.png?text=韩风偶像写真" alt="合规示例2"></div>
+        <p class="prompt-preview">韩风偶像写真，白色针织毛衣，露肩设计，梦幻柔光与复古胶片氛围。</p>
+        <div class="card-foot"><div class="meta"></div><button class="btn open-btn" data-index="5">查看 / 提示词</button></div>
       </article>
-    </section>
 
-    <p style="text-align:center;color:rgba(255,255,255,0.45);font-size:13px;margin-top:20px;">
-      小提示：把鼠标在页面移动，会出现更清晰的“皮卡丘”拖尾；点击任意作品会触发高质量“杰尼龟”飞入弹窗，并展示详情及提示词面板。
-    </p>
+    </section>
   </main>
 
-  <!-- Overlay / Modal -->
+  <!-- Modal -->
   <div class="overlay" id="overlay" aria-hidden="true">
-    <div class="modal" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
-      <button class="close-btn" id="closeBtn">返回 ✕</button>
-
+    <div class="modal" role="dialog" aria-modal="true">
+      <button class="close-btn" id="closeBtn">关闭 ✕</button>
       <div class="image-area" id="modalImageArea">
         <img id="modalImage" src="" alt="大图展示">
       </div>
-
-      <div class="splitter" id="splitter" title="拖动调整提示词宽度"></div>
-
-      <aside class="prompt-area" id="promptArea">
-        <div class="pad-title">
-          <div>提示词 / 作品信息</div>
-          <div style="font-size:12px;color:rgba(255,255,255,0.65);" id="modalSize">-</div>
+      <aside class="info-area">
+        <div>
+          <div class="info-title" id="modalTitle">作品名称</div>
+          <div class="prompt-box" id="promptText" contenteditable="true" spellcheck="false">提示词将显示在这里，可编辑并复制。</div>
         </div>
-
-        <div class="prompt-box">
-          <div class="meta" id="metaInfo">作品细节 · 作者：小小克里斯</div>
-          <div id="promptText" class="prompt-text" contenteditable="true" spellcheck="false"></div>
-        </div>
-
-        <div style="display:flex;gap:8px;justify-content:space-between;align-items:center;">
-          <div class="hint">提示：可直接编辑、复制或调整分割条宽度。</div>
-          <div style="display:flex;gap:8px;">
-            <button class="btn" id="copyPrompt">复制提示词</button>
-            <button class="btn" id="downloadImage">下载图片</button>
-          </div>
+        <div class="info-actions">
+          <button class="btn" id="copyPrompt">复制提示词</button>
+          <button class="btn" id="downloadImage">下载图片</button>
         </div>
       </aside>
     </div>
   </div>
 
-  <!-- Template SVGs (hidden) for cloning: crisp vector shapes -->
-  <svg style="display:none;" id="tpl-sprites" xmlns="http://www.w3.org/2000/svg">
-    <!-- Pikachu-like simplified face: bright, high-contrast, stylized (not exact character) -->
-    <symbol id="pikaface" viewBox="0 0 120 120">
-      <defs>
-        <filter id="glow" x="-50%" y="-50%" width="200%" height="200%">
-          <feGaussianBlur stdDeviation="6" result="blur"/>
-          <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
-        </filter>
-      </defs>
-      <g filter="url(#glow)">
-        <circle cx="60" cy="60" r="50" fill="#ffd54d" stroke="#e5b73a" stroke-width="2"/>
-        <!-- eyes -->
-        <ellipse cx="46" cy="55" rx="6.8" ry="8.6" fill="#2b2b2b"/>
-        <ellipse cx="74" cy="55" rx="6.8" ry="8.6" fill="#2b2b2b"/>
-        <!-- cheeks -->
-        <circle cx="36" cy="72" r="8.5" fill="#ff6666" opacity="0.96"/>
-        <circle cx="84" cy="72" r="8.5" fill="#ff6666" opacity="0.96"/>
-        <!-- mouth -->
-        <path d="M56 76 q4 6 8 0" fill="none" stroke="#6b2b2b" stroke-linecap="round" stroke-width="3" />
-        <!-- stylized ear hints -->
-        <path d="M24 18 q12 -12 28 2" fill="none" stroke="#e5b73a" stroke-width="4" stroke-linecap="round"/>
-        <path d="M96 18 q-12 -12 -28 2" fill="none" stroke="#e5b73a" stroke-width="4" stroke-linecap="round"/>
-      </g>
-    </symbol>
-
-    <!-- Squirtle-like stylized turtle (vector, higher detail than prior) -->
-    <symbol id="squirtle" viewBox="0 0 200 200">
-      <defs>
-        <linearGradient id="shellGrad" x1="0" x2="1">
-          <stop offset="0" stop-color="#ffd9a8"/>
-          <stop offset="1" stop-color="#f2c58f"/>
-        </linearGradient>
-        <filter id="sglow" x="-50%" y="-50%" width="200%" height="200%">
-          <feGaussianBlur stdDeviation="8" result="blur"/>
-          <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
-        </filter>
-      </defs>
-
-      <g filter="url(#sglow)">
-        <!-- body -->
-        <ellipse cx="100" cy="100" rx="56" ry="64" fill="#6ec7ff" stroke="#3ea7d6" stroke-width="4"/>
-        <!-- head shading -->
-        <ellipse cx="100" cy="78" rx="44" ry="38" fill="#6ec7ff"/>
-        <!-- eye left -->
-        <g transform="translate(76,68)">
-          <ellipse cx="0" cy="0" rx="9" ry="12" fill="#15303a"/>
-          <circle cx="-2" cy="-3" r="2.2" fill="#fff" opacity="0.95"/>
-        </g>
-        <!-- eye right -->
-        <g transform="translate(124,68)">
-          <ellipse cx="0" cy="0" rx="9" ry="12" fill="#15303a"/>
-          <circle cx="-2" cy="-3" r="2.2" fill="#fff" opacity="0.95"/>
-        </g>
-        <!-- mouth -->
-        <path d="M88 92 q12 10 24 0" stroke="#123" stroke-width="3" fill="none" stroke-linecap="round"/>
-
-        <!-- shell -->
-        <g transform="translate(100,125)">
-          <path d="M-60 0 q0 -36 60 -36 q60 0 60 36 q0 28 -60 44 q-60 -16 -60 -44z" fill="url(#shellGrad)" stroke="#caa06f" stroke-width="4"/>
-          <!-- shell pattern -->
-          <path d="M-28 -12 l24 -0 l12 12 l24 0 l12 12 l-84 0 z" fill="rgba(0,0,0,0.04)"/>
-        </g>
-        <!-- limb hints -->
-        <ellipse cx="56" cy="128" rx="12" ry="18" fill="#6ec7ff"/>
-        <ellipse cx="144" cy="128" rx="12" ry="18" fill="#6ec7ff"/>
-      </g>
-    </symbol>
-  </svg>
-
   <script>
     (function(){
-      // Data items example
+      // 数据（已替换为合规提示词）
       const items = [
-        {
-          title: "梦境都市（文生图）",
-          img: "https://images.unsplash.com/photo-1542751371-adc38448a05e?q=80&w=1600&auto=format&fit=crop&ixlib=rb-4.0.3&s=2397bd5a3955d5f6f21b68f6f0f7bd3f",
-          prompt: "奇幻都市夜景，赛博朋克风格，浓烈霓虹灯，远景有飞行器，超高细节，电影镜头感，灯光体积感 --ar 16:9 --v 5",
-          size: "1024 × 1024",
-          meta: "风格：赛博朋克 · 渲染：超写实"
-        },
-        {
-          title: "机械之心（图生视频）",
-          img: "https://images.unsplash.com/photo-1517694712202-14dd9538aa97?q=80&w=1600&auto=format&fit=crop&ixlib=rb-4.0.3&s=4f8da4fbeae4f0a0f12bb3b7c2a1d9f4",
-          prompt: "旋转齿轮中枢，微距镜头，蓝色背光，循环 10s，slow motion，粒子漂移 --fps 30 --loop",
-          size: "示意帧 1200 × 800",
-          meta: "图生视频 · 循环演示"
-        },
-        {
-          title: "森林精灵（混合风）",
-          img: "https://images.unsplash.com/photo-1500530855697-b586d89ba3ee?q=80&w=1600&auto=format&fit=crop&ixlib=rb-4.0.3&s=8f6f63b1cac9a8d2a2b8ff47b3a1f9b7",
-          prompt: "童话风格森林精灵，柔和逆光，绿色叶片，微距人像，浅景深，细腻皮肤质感 --ar 4:5 --v 5",
-          size: "1024 × 1280",
-          meta: "混合风格 · 人像微距"
-        },
-        {
-          title: "未来航海（文生图）",
-          img: "https://images.unsplash.com/photo-1500534314209-a25ddb2bd429?q=80&w=1600&auto=format&fit=crop&ixlib=rb-4.0.3&s=8f2d2f1d5b8c6eb0b7a3e1e3fdf7b5f8",
-          prompt: "太空中的海洋，飞船航行在星海波浪上，蓝紫色调，光线散射，高细节，广角镜头 --ar 21:9 --v 5",
-          size: "2048 × 1152",
-          meta: "文生图 · 电影级构图"
-        },
-        {
-          title: "城市剪影（动态图示例）",
-          img: "https://images.unsplash.com/photo-1482192596544-9eb780fc7f66?q=80&w=1600&auto=format&fit=crop&ixlib=rb-4.0.3&s=cf5a4f2e2b5a4d6f6a7c2a1b3c4d9e5f",
-          prompt: "城市剪影与光轨，高对比，长曝光，动感光线，蓝黑调，锐度适中 --ar 16:9 --exposure long",
-          size: "1920 × 1080",
-          meta: "动态图示例 · 光轨"
-        },
-        {
-          title: "温馨小屋（文生图）",
-          img: "https://images.unsplash.com/photo-1502082553048-f009c37129b9?q=80&w=1600&auto=format&fit=crop&ixlib=rb-4.0.3&s=7d8e2a2a927d2f9d9e6a3f3b2c1d0e8a",
-          prompt: "木质小屋内景，温暖黄色灯光，粗糙木纹，微小尘粒，细节渲染，温馨感觉 --ar 4:3 --v 5",
-          size: "1200 × 900",
-          meta: "氛围图 · 温暖"
-        }
+        { title:"梦境都市（文生图）", img:"https://images.unsplash.com/photo-1542751371-adc38448a05e?q=80&w=1600&auto=format&fit=crop&ixlib=rb-4.0.3&s=2397bd5a3955d5f6f21b68f6f0f7bd3f", prompt:"奇幻都市夜景，赛博朋克风格，浓烈霓虹灯，远景飞行器，电影镜头感。" },
+        { title:"机械之心（图生视频）", img:"https://images.unsplash.com/photo-1517694712202-14dd9538aa97?q=80&w=1600&auto=format&fit=crop&ixlib=rb-4.0.3&s=4f8da4fbeae4f0a0f12bb3b7c2a1d9f4", prompt:"旋转齿轮中枢，微距镜头，蓝色背光，循环动效，粒子漂移。" },
+        { title:"森林精灵（混合风）", img:"https://images.unsplash.com/photo-1500530855697-b586d89ba3ee?q=80&w=1600&auto=format&fit=crop&ixlib=rb-4.0.3&s=8f6f63b1cac9a8d2a2b8ff47b3a1f9b7", prompt:"童话人像，柔和逆光，绿意，浅景深，细腻肤质处理。" },
+        { title:"未来航海（文生图）", img:"https://images.unsplash.com/photo-1500534314209-a25ddb2bd429?q=80&w=1600&auto=format&fit=crop&ixlib=rb-4.0.3&s=8f2d2f1d5b8c6eb0b7a3e1e3fdf7b5f8", prompt:"太空海洋，飞船航行，蓝紫光效，电影级构图。" },
+        { title:"清新晨光写真（示例）", img:"https://via.placeholder.com/1600x1600.png?text=清新晨光写真", prompt:"清新晨光人像，居家风格，温柔表情，iPhone 摄影风格，正方形 1:1，微颗粒胶片质感。" },
+        { title:"韩风偶像写真（示例）", img:"https://via.placeholder.com/1600x1600.png?text=韩风偶像写真", prompt:"韩风偶像写真，白色针织毛衣，露肩设计，梦幻柔光与复古胶片氛围。" }
       ];
 
-      // Hook buttons/cards
+      // Modal logic
       document.querySelectorAll('.open-btn').forEach(btn=>{
-        btn.addEventListener('click', openModalFromBtn);
+        btn.addEventListener('click', (e)=>{
+          e.stopPropagation();
+          const idx = parseInt(btn.dataset.index,10);
+          openModal(idx);
+        });
       });
       document.querySelectorAll('.card').forEach(card=>{
         card.addEventListener('click', function(e){
-          const idx = parseInt(this.dataset.index,10);
           if(e.target.classList.contains('open-btn')) return;
+          const idx = parseInt(this.dataset.index,10);
           openModal(idx);
         });
       });
@@ -574,45 +357,32 @@
       const overlay = document.getElementById('overlay');
       const modalImage = document.getElementById('modalImage');
       const promptText = document.getElementById('promptText');
-      const metaInfo = document.getElementById('metaInfo');
-      const modalSize = document.getElementById('modalSize');
+      const modalTitle = document.getElementById('modalTitle');
       const closeBtn = document.getElementById('closeBtn');
-      const downloadBtn = document.getElementById('downloadImage');
       const copyBtn = document.getElementById('copyPrompt');
+      const downloadBtn = document.getElementById('downloadImage');
 
-      function openModalFromBtn(e){
-        e.stopPropagation();
-        // prefer button's dataset index
-        const idx = parseInt(this.dataset.index,10);
-        openModal(idx);
-      }
-
-      function openModal(idx){
-        const item = items[idx];
-        if(!item) return;
-        modalImage.src = item.img;
-        modalImage.alt = item.title;
-        promptText.innerText = item.prompt;
-        metaInfo.innerText = item.meta;
-        modalSize.innerText = item.size;
+      function openModal(i){
+        const it = items[i];
+        if(!it) return;
+        modalImage.src = it.img;
+        modalImage.alt = it.title;
+        promptText.innerText = it.prompt;
+        modalTitle.innerText = it.title;
         overlay.classList.add('open');
         overlay.setAttribute('aria-hidden','false');
-
-        // animate squirtle spawn from last mouse to modal center
-        const last = window._lastMouse || {x: window.innerWidth/2, y: window.innerHeight/2};
-        spawnSquirtle(last.x, last.y);
       }
-
       closeBtn.addEventListener('click', ()=>{ overlay.classList.remove('open'); overlay.setAttribute('aria-hidden','true'); });
       overlay.addEventListener('click', (e)=>{ if(e.target === overlay) overlay.classList.remove('open'); });
+      window.addEventListener('keydown', (e)=>{ if(e.key === 'Escape') overlay.classList.remove('open'); });
 
       copyBtn.addEventListener('click', ()=>{
         const text = promptText.innerText || "";
-        navigator.clipboard?.writeText(text).then(()=>{
-          copyBtn.innerText = '已复制';
-          setTimeout(()=> copyBtn.innerText = '复制提示词', 1200);
-        }).catch(()=> { alert('复制失败，请手动选择复制'); });
+        if(!text){ copyBtn.innerText='无提示词'; setTimeout(()=> copyBtn.innerText='复制提示词',1200); return; }
+        navigator.clipboard?.writeText(text).then(()=>{ copyBtn.innerText='已复制'; setTimeout(()=> copyBtn.innerText='复制提示词',1100); })
+          .catch(()=> { alert('复制失败，请手动复制'); });
       });
+
       downloadBtn.addEventListener('click', ()=>{
         const url = modalImage.src;
         if(!url) return;
@@ -624,161 +394,81 @@
         a.remove();
       });
 
-      // Splitter
-      (function setupSplitter(){
-        const splitter = document.getElementById('splitter');
-        const promptArea = document.getElementById('promptArea');
-        let dragging = false;
-        let startX = 0;
-        let startWidth = 0;
-        splitter.addEventListener('mousedown', (e)=>{
-          dragging = true;
-          startX = e.clientX;
-          startWidth = promptArea.getBoundingClientRect().width;
-          document.body.style.cursor = getComputedStyle(splitter).cursor || 'col-resize';
-          e.preventDefault();
-        });
-        window.addEventListener('mousemove', (e)=>{
-          if(!dragging) return;
-          const dx = startX - e.clientX;
-          if(window.innerWidth <= 640){
-            const newH = Math.min(Math.max(140, startWidth - dx), window.innerHeight - 160);
-            promptArea.style.height = newH + 'px';
-            return;
-          }
-          const newWidth = Math.min(Math.max(220, startWidth + dx), window.innerWidth * 0.7);
-          promptArea.style.width = newWidth + 'px';
-        });
-        window.addEventListener('mouseup', ()=>{ if(dragging){ dragging=false; document.body.style.cursor=''; }});
-      })();
-
-      // Improved trail: pool of SVG clones for crispness and better performance
-      (function setupTrailPool(){
+      // ===== balloons spawner (one every 5s, floats up and fades when reaching header area) =====
+      (function initBalloons(){
         const pool = [];
-        const poolSize = 14; // limited pool for performance
-        const svgTpl = document.getElementById('tpl-sprites').querySelector('#pikaface');
-
-        // Create pool
-        for(let i=0;i<poolSize;i++){
-          const wrapper = document.createElement('div');
-          wrapper.className = 'trail-svg hidden';
-          wrapper.style.left = '0px';
-          wrapper.style.top = '0px';
-          // clone svg symbol into inline svg
-          const svg = document.createElementNS('http://www.w3.org/2000/svg','svg');
-          svg.setAttribute('viewBox','0 0 120 120');
-          svg.setAttribute('width','36');
-          svg.setAttribute('height','36');
-          svg.innerHTML = '<use href="#pikaface"></use>';
-          wrapper.appendChild(svg);
-          document.body.appendChild(wrapper);
-          pool.push({el: wrapper, busy:false});
+        const maxPool = 10;
+        for(let i=0;i<maxPool;i++){
+          const el = document.createElement('div');
+          el.className = 'balloon';
+          el.style.display = 'none';
+          document.body.appendChild(el);
+          pool.push({el, busy:false});
         }
 
-        // Throttle creation rate
-        let lastCreate = 0;
-        const minInterval = 35; // ms between trail pops
+        // colors and simple SVG shapes
+        const balloonSVGTpl = (color, stringColor) => {
+          return `
+            <svg viewBox="0 0 48 64" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+              <defs>
+                <linearGradient id="g${color.replace('#','')}" x1="0" x2="1">
+                  <stop offset="0" stop-color="${color}" stop-opacity="0.98"/>
+                  <stop offset="1" stop-color="${stringColor}" stop-opacity="0.94"/>
+                </linearGradient>
+              </defs>
+              <g>
+                <ellipse cx="24" cy="24" rx="18" ry="22" fill="url(#g${color.replace('#','')})" stroke="#ffffff" stroke-opacity="0.18" stroke-width="1"/>
+                <path d="M24 46 q0 6 0 10" stroke="#8aa9c8" stroke-width="2" stroke-linecap="round" fill="none"/>
+                <path d="M22 54 q2 2 4 0" stroke="#8aa9c8" stroke-width="1.4" stroke-linecap="round" fill="none"/>
+              </g>
+            </svg>
+          `;
+        };
 
-        window.addEventListener('mousemove', (e)=>{
-          const now = performance.now();
-          if(now - lastCreate < minInterval) return;
-          lastCreate = now;
-          spawnTrail(e.clientX, e.clientY);
-          window._lastMouse = {x:e.clientX, y:e.clientY};
-        });
+        const colors = [
+          ['#ff9fb2','#ff6f94'],
+          ['#ffd27a','#ffb447'],
+          ['#8fd3ff','#57b6ff'],
+          ['#c8a1ff','#a77dff'],
+          ['#9fffcf','#66f3a8']
+        ];
 
-        function spawnTrail(x,y){
-          const item = pool.find(p => !p.busy);
-          if(!item) return;
-          item.busy = true;
-          const el = item.el;
-          el.classList.remove('hidden');
+        // spawn every 5s
+        setInterval(()=> spawnBalloon(), 5000);
+
+        function spawnBalloon(){
+          const p = pool.find(x=>!x.busy);
+          if(!p) return;
+          p.busy = true;
+          const el = p.el;
+          el.style.display = 'block';
+          // random horizontal spawn within viewport width but bias toward center/header region
+          const vw = Math.max(document.documentElement.clientWidth || 0, window.innerWidth || 0);
+          const minX = 6; const maxX = vw - 54;
+          const x = Math.floor(minX + Math.random()*(maxX - minX));
+          const bottomStart = window.innerHeight + 20; // start slightly below viewport
           el.style.left = x + 'px';
-          el.style.top = y + 'px';
-          // random rotation & scale for lively trail
-          const rot = (Math.random()*28 - 14);
-          const scale = 0.9 + Math.random()*0.5;
-          el.style.transform = `translate(-50%,-50%) rotate(${rot}deg) scale(${scale})`;
-          // start fade animation class
-          el.classList.add('trail-fade');
-          // tidy after animation
+          el.style.top = bottomStart + 'px';
+          // choose color
+          const c = colors[Math.floor(Math.random()*colors.length)];
+          el.innerHTML = balloonSVGTpl(c[0], c[1]);
+          // random duration 10~16s to float upward; keyframe css animation applied inline
+          const duration = 11000 + Math.floor(Math.random()*7000);
+          el.style.animation = `floatUp ${duration}ms linear forwards`;
+          // slight horizontal sway using transition transform periodically
+          const sway = (Math.random()*40)-20;
+          el.style.transform = `translateX(0)`;
+          // remove after animation end (duration + small buffer)
           setTimeout(()=>{
-            el.classList.remove('trail-fade');
-            el.classList.add('hidden');
-            el.style.opacity = '';
+            el.style.display = 'none';
+            el.style.animation = '';
             el.style.transform = '';
-            item.busy = false;
-          }, 760);
+            p.busy = false;
+          }, duration + 420);
         }
       })();
 
-      // Improved Squirtle: use cloned SVG for sharp rendering and smooth animation
-      function spawnSquirtle(fromX = window.innerWidth/2, fromY = window.innerHeight/2){
-        // create wrapper
-        const wrapper = document.createElement('div');
-        wrapper.className = 'squirtle-svg';
-        wrapper.style.left = fromX + 'px';
-        wrapper.style.top = fromY + 'px';
-        wrapper.style.opacity = '1';
-        wrapper.style.transform = 'translate(-50%,-50%) scale(.8) rotate(0deg)';
-        // inline svg clone
-        const svgRoot = document.getElementById('tpl-sprites').querySelector('#squirtle');
-        const svg = document.createElementNS('http://www.w3.org/2000/svg','svg');
-        svg.setAttribute('viewBox', svgRoot.getAttribute('viewBox') || '0 0 200 200');
-        svg.setAttribute('width','84');
-        svg.setAttribute('height','84');
-        svg.innerHTML = '<use href="#squirtle"></use>';
-        // add bounce class for entrance
-        svg.classList.add('squirtle-bounce');
-        wrapper.appendChild(svg);
-        document.body.appendChild(wrapper);
-
-        // compute target (modal center)
-        const modal = document.querySelector('.modal');
-        const modalRect = modal ? modal.getBoundingClientRect() : null;
-        const targetX = modalRect ? (modalRect.left + modalRect.width * 0.5) : window.innerWidth/2;
-        const targetY = modalRect ? (modalRect.top + modalRect.height * 0.45) : window.innerHeight/2;
-
-        // small randomized curve: animate position and rotation
-        // Use requestAnimationFrame to set target (CSS transitions handle smoothness)
-        requestAnimationFrame(()=>{
-          wrapper.style.left = (targetX + (Math.random()*32-16)) + 'px';
-          wrapper.style.top = (targetY + (Math.random()*20-10)) + 'px';
-          wrapper.style.transform = 'translate(-50%,-50%) scale(1) rotate(' + (Math.random()*20-10) + 'deg)';
-        });
-
-        // after arrival, do a subtle pulse + glow then shrink & remove
-        setTimeout(()=>{
-          wrapper.style.transform = 'translate(-50%,-48%) scale(1.14) rotate(0deg)';
-          wrapper.style.opacity = '1';
-        }, 420);
-
-        setTimeout(()=>{
-          wrapper.style.transform = 'translate(-50%,-50%) scale(.14) rotate(-30deg)';
-          wrapper.style.opacity = '0';
-        }, 1200);
-
-        setTimeout(()=> wrapper.remove(), 1700);
-      }
-
-      // record last mouse pos for spawn
-      window.addEventListener('mousedown', (e)=>{ window._lastMouse = {x:e.clientX,y:e.clientY}; });
-
-      // accessibility: ESC to close modal
-      window.addEventListener('keydown', (e)=>{
-        if(e.key === 'Escape') overlay.classList.remove('open');
-      });
-
-      // Prevent select while dragging splitter
-      window.addEventListener('selectstart', (e)=>{
-        if(getComputedStyle(document.body).cursor.includes('resize')) e.preventDefault();
-      });
-
-      // Touch fallback: allow tap to open the first item
-      if(('ontouchstart' in window) && !('onmousemove' in window)){
-        document.querySelectorAll('.open-btn')[0]?.addEventListener('touchstart', function(){ openModal(0); });
-      }
-
+      // Ensure clouds keep rendering smoothly on resize (no extra code required; animations are CSS)
     })();
   </script>
 </body>
